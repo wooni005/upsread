@@ -38,16 +38,16 @@ upsStatus = {"lineVoltage": 0.0, "batteryVoltage": 0.0, "upsLoad": 0.0, "battery
 
 
 # The callback for when the client receives a CONNACK response from the server.
-def on_connect(client, userdata, flags, rc):
+def on_connect(_client, userdata, flags, rc):
     if rc == 0:
         print("MQTT Client connected successfully")
-        client.subscribe([(settings.MQTT_TOPIC_CHECK, 1)])
+        _client.subscribe([(settings.MQTT_TOPIC_CHECK, 1)])
     else:
         print(("ERROR: MQTT Client connected with result code %s " % str(rc)))
 
 
-# The callback for when a PUBLISH message is received from the server
-def on_message(client, userdata, msg):
+# The callback for when a published message is received from the server
+def on_message(_client, userdata, msg):
     print(('ERROR: Received ' + msg.topic + ' in on_message function' + str(msg.payload)))
 
 
@@ -78,11 +78,11 @@ oldStat = '0'
 while True:                  # Endless loop
     res = subprocess.check_output(settings.APCACCESS)
     for line in res.split(b"\n"):
-        #print(line)
+        # print(line)
         (key, spl, val) = line.partition(b": ")
         key = key.rstrip()         # Strip spaces right of text
         val = val.strip()         # Remove outside spaces
-        #print(key, val)
+        # print(key, val)
         if key == b'STATUS':
             if b'ONBAT' in val:
                 stat = '1'
@@ -92,10 +92,10 @@ while True:                  # Endless loop
                 oldStat = stat
                 mqtt_publish.single("huis/UPS/UPS-Spanningsuitval/ups", int(stat), qos=1, hostname="192.168.5.248")
 
-            #The real Shutdown of all servers is controlled by home_logic/systemWatch.py
-            if (b'ONBATT' in val) and (batt < settings.MINBATT):  # If there is less then 10 percent battery power left and we are offline then shutdown
+            # The real Shutdown of all servers is controlled by home_logic/systemWatch.py
+            if (b'ONBATT' in val) and (batt < settings.MINBATT):  # If there is less than 10 percent battery power left, and we are offline then shutdown
                 mqtt_publish.single("huis/UPS/UPS-ServerShutdown/ups", '1', qos=1, hostname="192.168.5.248")
-                #subprocess.call("sudo shutdown -h now", shell=True)   # Edit /etc/sudoers.d/myOverrides to make shutdown without password work
+                # subprocess.call("sudo shutdown -h now", shell=True)   # Edit /etc/sudoers.d/myOverrides to make shutdown without password work
 
         val = val.split(b' ', 1)[0]    # Split using space and only take first part
 
